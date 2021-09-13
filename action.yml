@@ -1,0 +1,101 @@
+name: 'AzVariables - Manage workflow variables'
+description: 'Load variables to environment variables in runner'
+branding:
+  icon: 'cloud-lightning'
+  color: 'red'
+
+inputs:
+  Load:
+    description: 'Lists the environment variables on runner'
+    required: false
+    default: 'true'
+  List:
+    description: 'Lists the environment variables on runner'
+    required: false
+    default: 'false'
+  VariableFilePath:
+    description: 'Path to a variables json file. Default: env.VariableFilePath'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download AzUtilities
+      shell: pwsh
+      run: |
+        Write-Output '::group::Download AzUtilities'
+        $env:PSModulePath -split $([System.IO.Path]::PathSeparator)
+        $InstallPath = $env:PSModulePath -split $([System.IO.Path]::PathSeparator) | Select-Object -First 1
+        if (! (Test-Path -Path $InstallPath)){
+            try {
+                Write-Output "$InstallPath not found, creating"
+                New-Item -Path $InstallPath -ItemType "directory" -Force | Out-Null
+            } catch {
+                throw "$InstallPath creating failed"
+            }
+        }
+        Write-Output "InstallPath: $InstallPath"
+
+        New-Item -Path "$InstallPath\Utils" -ItemType "directory" -Force | Out-Null
+        Invoke-WebRequest -OutFile "$InstallPath\Utils\Utils.psm1" -Uri "https://raw.githubusercontent.com/equinor/AzUtilities/main/Modules/Utils/Utils.psm1"
+        Invoke-WebRequest -OutFile "$InstallPath\Utils\Utils.psd1" -Uri "https://raw.githubusercontent.com/equinor/AzUtilities/main/Modules/Utils/Utils.psd1"
+
+    - id: AzVariablesLoad
+      shell: pwsh
+      run: |
+        New-GitHubLogGroup -Title "AzVariables-Load"
+
+        Write-Output '-------------------------------------------'
+        Write-Output 'Environment variables:'
+        $env = @{
+            Load              = $env:Load | ConvertTo-Boolean
+            VariableFilePath = $env:VariableFilePath
+        }
+        $env.GetEnumerator() | Sort-Object -Property Name
+
+        Write-Output '-------------------------------------------'
+        Write-Output 'Action inputs:'
+        $inputs = @{
+            Load              = '${{ inputs.Load }}' | ConvertTo-Boolean
+            VariableFilePath = '${{ inputs.VariableFilePath }}'
+        }
+        $inputs.GetEnumerator() | Sort-Object -Property Name
+
+        Write-Output '-------------------------------------------'
+        Write-Output 'Executing with:'
+        $Params = Merge-Hashtables -Main $env -Overrides $inputs
+        $Params.GetEnumerator() | Sort-Object -Property Name
+
+        . "$env:GITHUB_ACTION_PATH\Scripts\main.ps1" @Params
+
+        Write-Output '::endgroup::'
+
+    - id: AzVariablesList
+      shell: pwsh
+      run: |
+        New-GitHubLogGroup -Title "AzVariables-List"
+
+        Write-Output '-------------------------------------------'
+        Write-Output 'Environment variables:'
+        $env = @{
+            List              = $env:List | ConvertTo-Boolean
+            VariableFilePath = $env:VariableFilePath
+        }
+        $env.GetEnumerator() | Sort-Object -Property Name
+
+        Write-Output '-------------------------------------------'
+        Write-Output 'Action inputs:'
+        $inputs = @{
+            List              = '${{ inputs.List }}' | ConvertTo-Boolean
+            VariableFilePath = '${{ inputs.VariableFilePath }}'
+        }
+        $inputs.GetEnumerator() | Sort-Object -Property Name
+
+        Write-Output '-------------------------------------------'
+        Write-Output 'Executing with:'
+        $Params = Merge-Hashtables -Main $env -Overrides $inputs
+        $Params.GetEnumerator() | Sort-Object -Property Name
+
+        . "$env:GITHUB_ACTION_PATH\Scripts\main.ps1" @Params
+
+        Write-Output '::endgroup::'

@@ -1,0 +1,8 @@
+{
+    "MascotName": "Super Cat",
+    "Letter": "A",
+    "VariableFilePaths": [
+        "./Tests/B.json",
+        "./Tests/C.json"
+    ]
+}

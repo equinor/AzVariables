@@ -1,0 +1,80 @@
+name: Action-Test
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - action.yml
+      - .github/workflows/Action-Test.yml
+      - Modules/**
+      - Scripts/**
+      - Tests/**
+
+env:
+  ParametersPath: Tests
+  VariableFilePath: Tests/A.json
+
+jobs:
+  DefaultsTest:
+    name: Load variables with defaults
+    strategy:
+      matrix:
+        os: [ubuntu-latest,windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+
+      - name: Checkout parameters
+        uses: actions/checkout@v2
+
+      - name: Load variables with defaults
+        uses: equinor/AzVariables@v1
+
+  ListTest:
+    name: List variables from runner
+    strategy:
+      matrix:
+        os: [ubuntu-latest,windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+
+      - name: Checkout parameters
+        uses: actions/checkout@v2
+
+      - name: List variables from runner
+        uses: equinor/AzVariables@v1
+        with:
+          List: true
+
+  LoadTest:
+    name: Load variables using overrides/inputs - C.json
+    strategy:
+      matrix:
+        os: [ubuntu-latest,windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+
+      - name: Checkout parameters
+        uses: actions/checkout@v2
+
+      - name: Load variables using overrides/inputs
+        uses: equinor/AzVariables@v1
+        with:
+          Load: true
+          VariableFilePath: ${{ env.ParametersPath }}/C.json
+
+  LoadAndListTest:
+    name: Load and list variables
+    strategy:
+      matrix:
+        os: [ubuntu-latest,windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+
+      - name: Checkout parameters
+        uses: actions/checkout@v2
+
+      - name: Load and list variables
+        uses: equinor/AzVariables@v1
+        with:
+          Load: true
+          List: true
